@@ -540,7 +540,9 @@ class Client implements Interfaces\ClientInterface
 
             // If socket is active
             if (null !== $this->getSocket()) {
-                $this->connector = new APIConnector(new Streams\ResourceStream($this->getSocket()));
+                $stream = new Streams\ResourceStream($this->getSocket());
+                $stream->setThrowTimeoutException($this->config('throw_timeout_exception'));
+                $this->connector = new APIConnector($stream);
                 // If we logged in then exit from loop
                 if (true === $this->login()) {
                     $connected = true;

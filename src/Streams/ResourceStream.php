@@ -18,6 +18,13 @@ class ResourceStream implements StreamInterface
     protected $stream;
 
     /**
+     * Whether to throw exception on stream timeout
+     *
+     * @var bool
+     */
+    protected $throwTimeoutException = true;
+
+    /**
      * ResourceStream constructor.
      *
      * @param $stream
@@ -30,6 +37,18 @@ class ResourceStream implements StreamInterface
 
         // TODO: Should we verify the resource type?
         $this->stream = $stream;
+    }
+
+    /**
+     * Set whether to throw exception on stream timeout
+     *
+     * @param bool $throw
+     * @return self
+     */
+    public function setThrowTimeoutException(bool $throw): self
+    {
+        $this->throwTimeoutException = $throw;
+        return $this;
     }
 
     /**
@@ -50,9 +69,13 @@ class ResourceStream implements StreamInterface
 
         $result = fread($this->stream, $length);
 
-        // Stream in blocking mode timed out
-        if(socket_get_status($this->stream)['timed_out']){
-            throw new StreamException('Stream timed out');
+        // PHP 8.4 may report timed_out=true even on successful partial reads
+        // Only throw timeout if we got no data AND stream actually timed out
+        if ($this->throwTimeoutException) {
+            $info = stream_get_meta_data($this->stream);
+            if ($info['timed_out'] && ($result === '' || $result === false)) {
+                throw new StreamException('Stream timed out');
+            }
         }
 
         if (false === $result) {
