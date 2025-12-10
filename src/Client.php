@@ -252,7 +252,7 @@ class Client implements Interfaces\ClientInterface
         }
 
         // Read answer from socket in loop, or until timeout reached
-        $startTime  = time();
+        $startTime = time();
         while (true) {
             // Exit from loop if timeout reached
             if (time() > $startTime + $this->config('socket_timeout')) {
@@ -374,7 +374,10 @@ class Client implements Interfaces\ClientInterface
                 }
 
                 // Save as result
-                if(null != $this->parseResponse($item)) $result[] = $this->parseResponse($item)[0];
+                $parsed = $this->parseResponse($item);
+                if (!empty($parsed) && isset($parsed[0])) {
+                    $result[] = $parsed[0];
+                }
             }
 
         } else {
