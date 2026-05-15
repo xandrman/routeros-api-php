@@ -43,13 +43,17 @@ class ClientTest extends TestCase
             'ssh_port' => (int) getenv('ROS_SSH_PORT'),
         ];
 
-        $this->client = new class($this->config) extends Client {
+        $this->client =
+
+            new class ($this->config) extends Client {
+
             // Convert protected method to public
             public function pregResponse(string $value, ?array &$matches): void
             {
                 parent::pregResponse($value, $matches);
             }
-        };
+
+            };
 
         $this->portModern = (int) getenv('ROS_PORT_MODERN');
         $this->portLegacy = (int) getenv('ROS_PORT_LEGACY');
@@ -352,5 +356,24 @@ class ClientTest extends TestCase
 
         $result = $this->client->query('/export');
         self::assertNotEmpty($result);
+    }
+
+    public function test_parseResponse_emptyArrayHandling(): void
+    {
+        // Simulate responses that could come from nested script execution
+        $emptyResponse = [];
+        $result        = $this->client->parseResponse($emptyResponse);
+        self::assertIsArray($result);
+        self::assertEmpty($result);
+
+        // Response with only control words (no data)
+        $doneOnlyResponse = ['!done'];
+        $result           = $this->client->parseResponse($doneOnlyResponse);
+        self::assertIsArray($result);
+
+        // Response with trap (error case)
+        $trapResponse = ['!trap', '=message=no such command'];
+        $result       = $this->client->parseResponse($trapResponse);
+        self::assertIsArray($result);
     }
 }
