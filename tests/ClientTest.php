@@ -143,7 +143,7 @@ class ClientTest extends TestCase
     public function test_construct_exceptionUnableToConnect(): void
     {
         $this->expectException(ConnectException::class);
-        $this->expectExceptionCode(111);
+        $this->expectExceptionCode(PHP_OS_FAMILY === 'Windows' ? 10061 : 111);
 
         new Client([
             'user'     => $this->config['user'],
